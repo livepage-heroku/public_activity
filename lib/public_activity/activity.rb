@@ -1,8 +1,16 @@
 require 'active_record'
+require 'ostruct'
+require 'erb'
 
 module PublicActivity
   # The ActiveRecord model containing 
   # details about recorded activity.
+  class ErbBinding < OpenStruct
+    def get_binding
+      return binding()
+    end
+  end
+
   class Activity < ActiveRecord::Base
     # Define polymorphic association to the parent
     belongs_to :trackable, :polymorphic => true
@@ -44,8 +52,10 @@ module PublicActivity
         erb_template = resolveTemplate(key)
         if !erb_template.nil? 
           parameters.merge! params
+          vars = ErbBinding.new(parameters)
           renderer = ERB.new(erb_template)
-          renderer.result(binding)
+          vars_binding = vars.send(:get_binding)
+          renderer.result(vars_binding)
         else
           "Template not defined"
         end
